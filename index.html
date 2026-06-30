@@ -1460,7 +1460,52 @@
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
 
+<script type="importmap">
+{
+  "imports": {
+    "firebase/app": "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js",
+    "firebase/firestore": "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"
+  }
+}
+</script>
 <script type="module">
+import { initializeApp } from "firebase/app";
+import { getFirestore, doc, setDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
+
+const _fbApp = initializeApp({
+  apiKey: "AIzaSyBEivsOZ275-q81_jRWy6cHMAHsNAOkSEE",
+  authDomain: "crmcomercial-integrus.firebaseapp.com",
+  projectId: "crmcomercial-integrus",
+  storageBucket: "crmcomercial-integrus.firebasestorage.app",
+  messagingSenderId: "458529585059",
+  appId: "1:458529585059:web:fdda48862c0b6e90d28c16"
+});
+const _db = getFirestore(_fbApp);
+
+window._fbSyncLead = async (lead) => {
+  await setDoc(doc(_db, 'leads', lead.id), lead);
+};
+window._fbSyncParceiro = async (p) => {
+  await setDoc(doc(_db, 'parceiros', p.id), p);
+};
+window._fbDeleteLead = async (id) => {
+  await deleteDoc(doc(_db, 'leads', id));
+};
+window._fbDeleteParceiro = async (id) => {
+  await deleteDoc(doc(_db, 'parceiros', id));
+};
+window._fbCarregar = async () => {
+  const [leadsSnap, parcSnap] = await Promise.all([
+    getDocs(collection(_db, 'leads')),
+    getDocs(collection(_db, 'parceiros'))
+  ]);
+  return {
+    leads: leadsSnap.docs.map(d => d.data()),
+    parceiros: parcSnap.docs.map(d => d.data())
+  };
+};
+</script>
+<script>
 const STORAGE_KEY = 'integrus_v1';
 
 function getData() {
@@ -3231,47 +3276,33 @@ function invalidateCache() {
 
 
 // ── FIREBASE SDK ──────────────────────────────────────────
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
-import { getFirestore, doc, setDoc, deleteDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
-
-const _fbApp = initializeApp({
-  apiKey: "AIzaSyBEivsOZ275-q81_jRWy6cHMAHsNAOkSEE",
-  authDomain: "crmcomercial-integrus.firebaseapp.com",
-  projectId: "crmcomercial-integrus",
-  storageBucket: "crmcomercial-integrus.firebasestorage.app",
-  messagingSenderId: "458529585059",
-  appId: "1:458529585059:web:fdda48862c0b6e90d28c16"
-});
-const _db = getFirestore(_fbApp);
+// Firebase carregado via importmap no bloco <script type="module"> acima
+// Funções expostas via window._fb* para uso no escopo global
 
 async function syncLead(lead) {
   try {
-    await setDoc(doc(_db, 'leads', lead.id), lead);
+    if (window._fbSyncLead) await window._fbSyncLead(lead);
   } catch(e) { console.warn('syncLead:', e.message); }
 }
 
 async function syncParceiro(parceiro) {
   try {
-    await setDoc(doc(_db, 'parceiros', parceiro.id), parceiro);
+    if (window._fbSyncParceiro) await window._fbSyncParceiro(parceiro);
   } catch(e) { console.warn('syncParceiro:', e.message); }
 }
 
 async function deletarLead_supa(id) {
-  try { await deleteDoc(doc(_db, 'leads', id)); } catch(e) { console.warn('deletarLead:', e.message); }
+  try { if (window._fbDeleteLead) await window._fbDeleteLead(id); } catch(e) { console.warn('deletarLead:', e.message); }
 }
 
 async function deletarParceiro_supa(id) {
-  try { await deleteDoc(doc(_db, 'parceiros', id)); } catch(e) { console.warn('deletarParceiro:', e.message); }
+  try { if (window._fbDeleteParceiro) await window._fbDeleteParceiro(id); } catch(e) { console.warn('deletarParceiro:', e.message); }
 }
 
 async function carregarDoFirebase() {
   try {
-    const [leadsSnap, parcSnap] = await Promise.all([
-      getDocs(collection(_db, 'leads')),
-      getDocs(collection(_db, 'parceiros'))
-    ]);
-    const leads = leadsSnap.docs.map(d => d.data());
-    const parceiros = parcSnap.docs.map(d => d.data());
+    if (!window._fbCarregar) return false;
+    const { leads, parceiros } = await window._fbCarregar();
     if (leads.length > 0 || parceiros.length > 0) {
       const dados = { leads, parceiros, compromissos: _cache?.compromissos || [] };
       _cache = dados;
@@ -3282,27 +3313,6 @@ async function carregarDoFirebase() {
   } catch(e) {
     console.warn('Firebase offline, usando localStorage:', e.message);
     return false;
-  }
-}
-
-async function migrarParaFirebase() {
-  if (!confirm('Migrar todos os dados locais para o Firebase?')) return;
-  showLoading('Migrando para Firebase...');
-  try {
-    const d = getData();
-    for (let i = 0; i < d.parceiros.length; i += 5) {
-      showLoading('Parceiros: ' + Math.min(i+5, d.parceiros.length) + '/' + d.parceiros.length);
-      await Promise.all(d.parceiros.slice(i, i+5).map(p => syncParceiro(p)));
-    }
-    for (let i = 0; i < d.leads.length; i += 10) {
-      showLoading('Leads: ' + Math.min(i+10, d.leads.length) + '/' + d.leads.length);
-      await Promise.all(d.leads.slice(i, i+10).map(l => syncLead(l)));
-    }
-    hideLoading();
-    showToast('✓ Migração concluída! ' + d.leads.length + ' leads enviados ao Firebase.');
-  } catch(e) {
-    hideLoading();
-    showToast('Erro na migração: ' + e.message);
   }
 }
 
