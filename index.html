@@ -928,7 +928,7 @@
   <div style="display:flex;gap:8px;align-items:center">
     <div style="display:flex;gap:8px;align-items:center">
     <button id="btn-instalar" class="btn btn-secondary" style="display:none;padding:8px 14px;font-size:13px" onclick="instalarApp()">Instalar app</button>
-    <button id="btn-migrar" class="btn" style="width:auto;margin:0;padding:8px 12px;font-size:12px;background:#1a4a2e;border:1px solid #2d7a4f;color:#4ade80" onclick="migrarParaFirebase()">☁ Migrar p/ Firebase</button>
+    <button id="btn-migrar" class="btn" style="width:auto;margin:0;padding:8px 12px;font-size:12px;background:#1a4a2e;border:1px solid #2d7a4f;color:#4ade80" onclick="window._migrar && window._migrar()">☁ Migrar p/ Firebase</button>
 <button class="btn btn-primary" style="width:auto;margin:0;padding:10px 18px;font-size:14px" onclick="abrirNovaIndicacao()">+ Nova</button>
   </div>
   </div>
@@ -3299,7 +3299,29 @@ async function deletarParceiro_supa(id) {
   try { if (window._fbDeleteParceiro) await window._fbDeleteParceiro(id); } catch(e) { console.warn('deletarParceiro:', e.message); }
 }
 
-async function carregarDoFirebase() {
+async function migrarParaFirebase() {
+  if (!confirm('Migrar todos os dados locais para o Firebase?')) return;
+  showLoading('Migrando para Firebase...');
+  try {
+    const d = getData();
+    for (let i = 0; i < d.parceiros.length; i += 5) {
+      showLoading('Parceiros: ' + Math.min(i+5, d.parceiros.length) + '/' + d.parceiros.length);
+      await Promise.all(d.parceiros.slice(i, i+5).map(p => syncParceiro(p)));
+    }
+    for (let i = 0; i < d.leads.length; i += 10) {
+      showLoading('Leads: ' + Math.min(i+10, d.leads.length) + '/' + d.leads.length);
+      await Promise.all(d.leads.slice(i, i+10).map(l => syncLead(l)));
+    }
+    hideLoading();
+    showToast('✓ Migração concluída! ' + d.leads.length + ' leads enviados ao Firebase.');
+  } catch(e) {
+    hideLoading();
+    showToast('Erro na migração: ' + e.message);
+  }
+}
+window._migrar = migrarParaFirebase;
+
+
   try {
     if (!window._fbCarregar) return false;
     const { leads, parceiros } = await window._fbCarregar();
