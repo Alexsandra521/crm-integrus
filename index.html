@@ -1460,19 +1460,10 @@
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
 
-<script type="importmap">
-{
-  "imports": {
-    "firebase/app": "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js",
-    "firebase/firestore": "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js"
-  }
-}
-</script>
-<script type="module">
-import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, deleteDoc, collection, getDocs } from "firebase/firestore";
-
-const _fbApp = initializeApp({
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+const _fbApp = firebase.initializeApp({
   apiKey: "AIzaSyBEivsOZ275-q81_jRWy6cHMAHsNAOkSEE",
   authDomain: "crmcomercial-integrus.firebaseapp.com",
   projectId: "crmcomercial-integrus",
@@ -1480,24 +1471,16 @@ const _fbApp = initializeApp({
   messagingSenderId: "458529585059",
   appId: "1:458529585059:web:fdda48862c0b6e90d28c16"
 });
-const _db = getFirestore(_fbApp);
+const _db = firebase.firestore();
 
-window._fbSyncLead = async (lead) => {
-  await setDoc(doc(_db, 'leads', lead.id), lead);
-};
-window._fbSyncParceiro = async (p) => {
-  await setDoc(doc(_db, 'parceiros', p.id), p);
-};
-window._fbDeleteLead = async (id) => {
-  await deleteDoc(doc(_db, 'leads', id));
-};
-window._fbDeleteParceiro = async (id) => {
-  await deleteDoc(doc(_db, 'parceiros', id));
-};
+window._fbSyncLead = async (lead) => { await _db.collection('leads').doc(lead.id).set(lead); };
+window._fbSyncParceiro = async (p) => { await _db.collection('parceiros').doc(p.id).set(p); };
+window._fbDeleteLead = async (id) => { await _db.collection('leads').doc(id).delete(); };
+window._fbDeleteParceiro = async (id) => { await _db.collection('parceiros').doc(id).delete(); };
 window._fbCarregar = async () => {
   const [leadsSnap, parcSnap] = await Promise.all([
-    getDocs(collection(_db, 'leads')),
-    getDocs(collection(_db, 'parceiros'))
+    _db.collection('leads').get(),
+    _db.collection('parceiros').get()
   ]);
   return {
     leads: leadsSnap.docs.map(d => d.data()),
