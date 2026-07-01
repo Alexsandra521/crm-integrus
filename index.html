@@ -936,7 +936,7 @@
 <nav class="nav">
   <button class="nav-btn active" onclick="showView('dashboard', this)">Dashboard</button>
   
-  <button class="nav-btn" onclick="showView('indicacoes', this)">Indicações</button>
+  <button class="nav-btn" onclick="showView('indicacoes', this)">Pipeline</button>
   <button class="nav-btn" onclick="showView('parceiros', this)">Parceiros</button>
   <button class="nav-btn" onclick="showView('relatorio', this)">Relatório</button>
   <button class="nav-btn" onclick="showView('agenda', this)">📅 Agenda</button>
@@ -1023,8 +1023,8 @@
 
 <!-- INDICAÇÕES -->
 <div id="view-indicacoes" class="view content">
-  <div class="section-title">Indicações</div>
-  <div class="section-sub">Todas as indicações registradas</div>
+  <div class="section-title">Pipeline</div>
+  <div class="section-sub">Todas as pipeline registradas</div>
 
   <!-- Busca por nome -->
   <div style="margin-bottom:10px;position:relative">
@@ -1656,7 +1656,7 @@ function excluirParceiro(id) {
   if (!p) return;
   const temLeads = d.leads.some(l => l.parceiro === id);
   const temVinculados = d.parceiros.some(x => x.master === id);
-  if (temLeads) { showToast('Parceiro tem indicações — não é possível excluir'); return; }
+  if (temLeads) { showToast('Parceiro tem pipeline — não é possível excluir'); return; }
   if (temVinculados) { showToast('Imobiliária tem corretores vinculados — exclua-os primeiro'); return; }
   if (!confirm(`Excluir "${p.nome}"?`)) return;
   d.parceiros = d.parceiros.filter(x => x.id !== id);
@@ -2120,10 +2120,10 @@ function renderPainel() {
   const fechadas = d.leads.filter(l => l.status === 'Fechado').length;
 
   document.getElementById('stats-grid').innerHTML = `
-    <div class="stat-card stat-clickable" onclick="irParaIndicacoes('todos')" title="Ver todas as indicações">
+    <div class="stat-card stat-clickable" onclick="irParaIndicacoes('todos')" title="Ver todas as pipeline">
       <div class="stat-value">${total}</div><div class="stat-label">Total</div>
     </div>
-    <div class="stat-card stat-clickable" onclick="irParaIndicacoes('aberto')" title="Ver indicações em aberto">
+    <div class="stat-card stat-clickable" onclick="irParaIndicacoes('aberto')" title="Ver pipeline em aberto">
       <div class="stat-value">${abertas}</div><div class="stat-label">Em aberto</div>
     </div>
     <div class="stat-card stat-clickable" onclick="irParaIndicacoes('Fechado')" title="Ver fechamentos">
@@ -2206,7 +2206,7 @@ function navMes(dir) {
 // ── NAVEGAÇÃO CLICÁVEL ─────────────────────────────────────
 
 function irParaIndicacoes(filtro) {
-  // Ativar aba Indicações
+  // Ativar aba Pipeline
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-indicacoes').classList.add('active');
@@ -2326,7 +2326,7 @@ function verFechamentosMes() {
 
   const mesLabel = MESES_PT[dashMes] + ' ' + dashAno;
 
-  // Navegar para aba Indicações com filtro Fechado
+  // Navegar para aba Pipeline com filtro Fechado
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-indicacoes').classList.add('active');
@@ -2371,11 +2371,11 @@ function verFechamentosMes() {
 }
 
 function irParaStatus(status) {
-  // Mudar para aba indicações
+  // Mudar para aba pipeline
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('view-indicacoes').classList.add('active');
-  document.querySelectorAll('.nav-btn')[2].classList.add('active'); // índice 2 = Indicações
+  document.querySelectorAll('.nav-btn')[2].classList.add('active'); // índice 2 = Pipeline
 
   // Aplicar filtro de status
   filtroAtivo = status;
@@ -2628,7 +2628,7 @@ function popularFiltroRelatorio() {
         const lp = d.parceiros.find(x => x.id === l.parceiro);
         return lp && lp.master === p.id;
       });
-      if (!temLeads) return; // só parceiros com indicações
+      if (!temLeads) return; // só parceiros com pipeline
       const opt = document.createElement('option');
       opt.value = p.id;
       opt.textContent = p.nome;
@@ -2746,8 +2746,8 @@ function renderRelatorio() {
   const { ini, fim } = getPeriodoRange();
   const periodoLabel = (() => {
     const val = document.getElementById('rel-periodo')?.value || 'todos';
-    const labels = { semana:'esta semana', semana_passada:'semana passada', mes:'este mês', mes_passado:'mês passado', personalizado:'período selecionado', todos:'todas as indicações' };
-    return labels[val] || 'todas as indicações';
+    const labels = { semana:'esta semana', semana_passada:'semana passada', mes:'este mês', mes_passado:'mês passado', personalizado:'período selecionado', todos:'todas as pipeline' };
+    return labels[val] || 'todas as pipeline';
   })();
 
   const hoje = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
@@ -2800,7 +2800,7 @@ function renderRelatorio() {
       ? `\n🔄 ${emAbertoCount} indicação(ões) em andamento — estamos trabalhando em cada uma delas.`
       : '';
 
-    const msg = `Olá, *${master.nome}*! 👋\n\nPassando para compartilhar o acompanhamento das suas indicações — porque transparência faz parte do nosso compromisso com você.\n\n📋 *Resumo — ${periodoLabel}*\n${'─'.repeat(30)}\n${linhas}${destaqueFech}${destaqueAberto}${destaqueVol}\n${'─'.repeat(30)}\n\n🤝 Cada indicação que você nos confia é tratada com muito cuidado e dedicação. Se tiver algum cliente em vista, pode nos chamar — juntos estamos construindo resultados reais.\n\n📝 *Observação:* _(espaço para sua anotação)_\n\nQualquer dúvida ou novidade, estamos à disposição!\n\n✨ *Integrus Investimentos*\n_Ética. Patrimônio. Resultado._\n${hoje}`;
+    const msg = `Olá, *${master.nome}*! 👋\n\nPassando para compartilhar o acompanhamento das suas pipeline — porque transparência faz parte do nosso compromisso com você.\n\n📋 *Resumo — ${periodoLabel}*\n${'─'.repeat(30)}\n${linhas}${destaqueFech}${destaqueAberto}${destaqueVol}\n${'─'.repeat(30)}\n\n🤝 Cada indicação que você nos confia é tratada com muito cuidado e dedicação. Se tiver algum cliente em vista, pode nos chamar — juntos estamos construindo resultados reais.\n\n📝 *Observação:* _(espaço para sua anotação)_\n\nQualquer dúvida ou novidade, estamos à disposição!\n\n✨ *Integrus Investimentos*\n_Ética. Patrimônio. Resultado._\n${hoje}`;
 
     const obsId = 'obs-rel-' + master.id;
     html += `<div class="relatorio-parceiro">
@@ -3113,7 +3113,7 @@ function renderDashboard() {
     document.getElementById('dash-top-parceiros').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px 0">Nenhum fechamento em ' + mesLabel + '</div>';
   } else {
     document.getElementById('dash-top-parceiros').innerHTML = top.map(([nome, data, pid], i) =>
-      `<div class="tp-row funil-row-link" onclick="irParaParceiro('${pid}')" title="Ver indicações de ${nome}">
+      `<div class="tp-row funil-row-link" onclick="irParaParceiro('${pid}')" title="Ver pipeline de ${nome}">
         <span class="tp-pos">${i+1}</span>
         <span class="tp-nome">${nome}</span>
         <span class="tp-qtd">${data.count} fechamento(s)</span>
@@ -3153,7 +3153,7 @@ function renderDashboard() {
 
 // PWA MANIFEST dinâmico
 const manifest = {
-  name: 'Integrus Indicações',
+  name: 'Integrus Pipeline',
   short_name: 'Integrus',
   start_url: window.location.href,
   display: 'standalone',
