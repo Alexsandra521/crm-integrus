@@ -3321,7 +3321,7 @@ async function migrarParaFirebase() {
 }
 window._migrar = migrarParaFirebase;
 
-
+async function carregarDoFirebase() {
   try {
     if (!window._fbCarregar) return false;
     const { leads, parceiros } = await window._fbCarregar();
