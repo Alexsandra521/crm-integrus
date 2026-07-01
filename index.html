@@ -2136,6 +2136,7 @@ function renderPainel() {
 }
 
 let filtroAtivo = 'todos';
+let editParceiroId = null;
 function filtrarStatus(status, btn) {
   filtroAtivo = status;
   document.querySelectorAll('#filtros-status .filtro-btn').forEach(b => b.classList.remove('active'));
